@@ -1,0 +1,478 @@
+  <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A NOVEL</title>
+    <style>
+        :root {
+            --terminal-green: #00ff00;
+            --terminal-dark: #000000;
+            --terminal-glow: 0 0 20px rgba(0, 255, 0, 0.6);
+            --terminal-glow-strong: 0 0 30px rgba(0, 255, 0, 0.8);
+            --terminal-error: #ff0000;
+            --terminal-border: 2px solid var(--terminal-green);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #000000 0%, #0a0a0a 100%);
+            color: var(--terminal-green);
+            font-family: 'Courier New', Courier, monospace;
+            padding: 3rem 2rem;
+            line-height: 1.6;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* CRT Scanline Effect */
+        body::after {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: 
+                linear-gradient(0deg, transparent 24%, rgba(0, 0, 0, 0.15) 25%, rgba(0, 0, 0, 0.15) 26%, transparent 27%, transparent 74%, rgba(0, 0, 0, 0.15) 75%, rgba(0, 0, 0, 0.15) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            z-index: 5;
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 4rem;
+            padding: 2rem 0;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            letter-spacing: 0.8rem;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-shadow: var(--terminal-glow-strong);
+            margin-bottom: 1rem;
+            color: var(--terminal-green);
+            animation: glow-pulse 3s ease-in-out infinite;
+        }
+
+        #system-status {
+            font-size: 0.95rem;
+            letter-spacing: 0.2rem;
+            opacity: 0.8;
+            text-shadow: var(--terminal-glow);
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 12px;
+            height: 30px;
+            background-color: var(--terminal-green);
+            vertical-align: middle;
+            animation: blink 0.8s step-end infinite;
+            box-shadow: var(--terminal-glow);
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            border: var(--terminal-border);
+            padding: 2rem;
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 
+                inset 0 0 20px rgba(0, 255, 0, 0.08),
+                0 0 30px rgba(0, 255, 0, 0.15);
+            backdrop-filter: blur(10px);
+        }
+
+        #login-view.panel {
+            box-shadow: 
+                inset 0 0 30px rgba(0, 255, 0, 0.12),
+                0 0 50px rgba(0, 255, 0, 0.25);
+        }
+
+        h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1rem;
+            text-shadow: var(--terminal-glow);
+            font-weight: bold;
+        }
+
+        ul {
+            list-style-type: none;
+        }
+
+        li {
+            padding: 0.8rem 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.25s ease;
+            border-left: 3px solid transparent;
+            margin: 0.3rem 0;
+        }
+
+        li::before {
+            content: "[ ]";
+            margin-right: 12px;
+            font-size: 0.85em;
+            opacity: 0.6;
+            transition: all 0.2s ease;
+        }
+
+        li:hover {
+            background-color: rgba(0, 255, 0, 0.1);
+            border-left-color: var(--terminal-green);
+            text-shadow: var(--terminal-glow);
+            padding-left: 1.5rem;
+        }
+
+        li:hover::before {
+            content: "[X]";
+            opacity: 1;
+        }
+
+        /* Login Screen Styles */
+        #login-view {
+            max-width: 600px;
+            margin: 3rem auto;
+            text-align: center;
+        }
+
+        #login-view h2 {
+            margin-bottom: 2rem;
+        }
+
+        #login-view p {
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            opacity: 0.85;
+            letter-spacing: 0.05rem;
+        }
+
+        .input-wrapper {
+            margin: 3rem 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .terminal-input {
+            background: rgba(0, 0, 0, 0.3);
+            border: var(--terminal-border);
+            color: var(--terminal-green);
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.8rem;
+            width: 280px;
+            padding: 1rem;
+            text-align: center;
+            outline: none;
+            letter-spacing: 0.4rem;
+            text-shadow: var(--terminal-glow);
+            box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.1), 0 0 20px rgba(0, 255, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .terminal-input:focus {
+            box-shadow: inset 0 0 25px rgba(0, 255, 0, 0.15), 0 0 30px rgba(0, 255, 0, 0.3);
+        }
+
+        .terminal-input::placeholder {
+            color: var(--terminal-green);
+            opacity: 0.5;
+        }
+
+        .terminal-btn {
+            background: rgba(0, 0, 0, 0.2);
+            border: var(--terminal-border);
+            color: var(--terminal-green);
+            font-family: 'Courier New', Courier, monospace;
+            padding: 1rem 2.5rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 1rem;
+            letter-spacing: 0.15rem;
+            text-shadow: var(--terminal-glow);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+            font-weight: bold;
+        }
+
+        .terminal-btn:hover {
+            background: var(--terminal-green);
+            color: var(--terminal-dark);
+            text-shadow: none;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .terminal-btn:active {
+            transform: translateY(0);
+        }
+
+        #login-error {
+            color: var(--terminal-error);
+            text-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+            margin-top: 1.5rem;
+            min-height: 24px;
+            font-weight: bold;
+            letter-spacing: 0.05rem;
+        }
+
+        /* Reader View Styles */
+        #reader-view {
+            display: none;
+            grid-template-columns: 1fr;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            border: var(--terminal-border);
+            padding: 0.75rem 1.5rem;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.1rem;
+            text-shadow: var(--terminal-glow);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+            transition: all 0.3s ease;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .back-btn:hover {
+            background-color: var(--terminal-green);
+            color: var(--terminal-dark);
+            text-shadow: none;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.5);
+        }
+
+        
+        #doc-content {
+            white-space: pre-wrap;
+            font-size: 1rem;
+            margin-top: 2rem;
+            min-height: 300px;
+            line-height: 1.8;
+            letter-spacing: 0.02rem;
+        }
+
+        #doc-title {
+            margin-top: 1.5rem;
+            text-shadow: var(--terminal-glow);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @keyframes glow-pulse {
+            0%, 100% { 
+                text-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+            }
+            50% { 
+                text-shadow: 0 0 40px rgba(0, 255, 0, 0.9);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .terminal-input {
+                width: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>> Letters<span class="cursor"></span></h1>
+        <p style="font-size: 0.85rem; letter-spacing: 0.15rem; opacity: 0.7; margin-bottom: 1.5rem;">[SECURE DOCUMENT REPOSITORY v2.1.7]</p>
+        <p id="system-status">SYSTEM STATUS: LOCKED // AUTHORIZATION REQUIRED</p>
+    </header>
+
+    <!-- SECURITY GATE VIEW -->
+    <div id="login-view" class="panel">
+        <h2>> SECURITY CHALLENGE_</h2>
+        <p style="margin-top: 1rem;">ENTER SECURE ACCESS PIN TO DECRYPT ARCHIVE FILES.</p>
+        <div class="input-wrapper">
+            <input type="password" id="pin-input" class="terminal-input" maxlength="4" placeholder="••••" autofocus onkeydown="if(event.key === 'Enter') verifyPin()">
+        </div>
+        <button class="terminal-btn" onclick="verifyPin()">AUTHENTICATE</button>
+        <div id="login-error"></div>
+    </div>
+
+    <!-- DIRECTORY VIEW (Hidden initially) -->
+    <div id="directory-view" style="display: none; max-width: 600px; margin: 0 auto;">
+        
+        <div class="panel">
+            <h2>> for you_</h2>
+            <ul id="letters-list">
+                <li onclick="openDoc('DOC_001')">DOC_001: The first message</li>
+                <li onclick="openDoc('DOC_002')">DOC_002: walks</li>
+                <li onclick="openDoc('DOC_003')">DOC_003: Ramen</li>
+                <li onclick="openDoc('DOC_004')">DOC_004: 9 on a biology exam</li>
+                <li onclick="openDoc('DOC_005')">DOC_005: Roses</li>
+                <li onclick="openDoc('DOC_006')">DOC_006: Cosmocaixa</li>
+                <li onclick="openDoc('DOC_007')">DOC_007: The kiss</li>
+                <li onclick="openDoc('DOC_008')">DOC_008: Us</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <!-- READER VIEW (Hidden initially) -->
+    <div id="reader-view" class="container panel">
+        <div>
+            <div class="back-btn" onclick="closeDoc()">< RETURN TO DIRECTORY</div>
+            <h2 id="doc-title">> TITLE_</h2>
+            <div id="doc-content"></div>
+        </div>
+    </div>
+
+    <!-- SECURITY CHALLENGE VIEW (Hidden initially) -->
+
+    <script>
+        const MASTER_PIN = "3110";
+
+        // Database of all documents
+        const archiveData = {
+            "DOC_001": { 
+                title: "The first message", 
+                content: "FROM: Apex Foundation Command\nTO: All Staff\n\nPhase 1 is authorized. Ensure absolute secrecy regarding the timeline. We only have three days to establish the primary loop.",
+            },
+            "DOC_002": { 
+                title: "walks", 
+                content: "Axiom-7 requires immediate recalibration. The red glow from the terminal interface is exceeding safe visual parameters. Fix the HTML rendering before the next shift.",
+            },
+            "DOC_003": { 
+                title: "Ramen", 
+                content: "Standard protocols are no longer sufficient. Ensure all encrypted channels remain active and monitor the external servers for breaches.",
+            },
+            "DOC_004": { 
+                title: "9 on a biology exam", 
+                content: "SUBJECT: 'El suspitós'\n\nSubject is behaving erratically. Recommend isolating the subject from the main group until the narrative resets.",
+            },
+            "DOC_005": { 
+                title: "Roses", 
+                content: "WARNING: Unauthorized access detected in the mainframe. \nTracing origin...\nTrace failed. They are already inside.",
+            },
+            "DOC_006": { 
+                title: "Cosmocaixa", 
+                content: "Agent Aleph-1 is being reassigned effective immediately. Clear their clearance codes from the old terminal.",
+            },
+            "DOC_007": { 
+                title: "The kiss", 
+                content: 'Status on Sector 4? "this" Everything needs to remain strictly  (locked down). No one gets in or out until the echo fades completely.',
+            },
+            "DOC_008": { 
+                title: "Us", 
+                content: "If you are reading <q>this<q>, the containment has failed. Proceed with the final 10-minute sequence. Do not look directly at the monitors.",
+            },
+        };
+
+        let typingInterval;
+        let currentDocId = null;
+
+        function verifyPin() {
+            const inputField = document.getElementById('pin-input');
+            const errorField = document.getElementById('login-error');
+            const statusField = document.getElementById('system-status');
+
+            if (inputField.value === MASTER_PIN) {
+                // Clear errors
+                errorField.innerText = "";
+                // Change status header
+                statusField.innerText = "SYSTEM STATUS: ONLINE // AUTHORIZATION: GRANTED";
+                // Switch views
+                document.getElementById('login-view').style.display = 'none';
+                document.getElementById('directory-view').style.display = 'grid';
+            } else {
+                errorField.innerText = "CRITICAL ERROR: ACCESS DENIED // INVALID PIN";
+                inputField.value = "";
+                inputField.focus();
+            }
+        }
+
+        function openDoc(docId) {
+            displayDocument(docId);
+        }
+
+        function displayDocument(docId) {
+            document.getElementById('directory-view').style.display = 'none';
+            document.getElementById('reader-view').style.display = 'block';
+
+            const doc = archiveData[docId];
+            document.getElementById('doc-title').innerText = `> ${docId}: ${doc.title}_`;
+            
+            const contentDiv = document.getElementById('doc-content');
+            contentDiv.innerHTML = '';
+            
+            // Apply invisible text styling for DOC_008 (Special someone)
+            if (docId === 'DOC_008') {
+                contentDiv.classList.add('invisible-text');
+            } else {
+                contentDiv.classList.remove('invisible-text');
+            }
+            
+            clearInterval(typingInterval);
+
+            let i = 0;
+            const textToType = doc.content;
+            
+            typingInterval = setInterval(() => {
+                if (i < textToType.length) {
+                    contentDiv.innerHTML += textToType.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(typingInterval);
+                    // Add signature if it exists
+                    if (doc.signature) {
+                        const signatureSpan = document.createElement('div');
+                        signatureSpan.style.marginTop = '2rem';
+                        signatureSpan.style.color = '#00ff00';
+                        signatureSpan.innerHTML = doc.signature;
+                        contentDiv.appendChild(signatureSpan);
+                    }
+                }
+            }, 15);
+        }
+
+        function closeDoc() {
+            clearInterval(typingInterval);
+            document.getElementById('reader-view').style.display = 'none';
+            document.getElementById('directory-view').style.display = 'block';
+            currentDocId = null;
+        }
+    </script>
+
+</body>
+</html>
